@@ -37,7 +37,8 @@ export class UsbDriveService {
 
   /**
    * Gets usb mount root drive path
-   * @returns usb mount root drive path. E.g. /dev/sda1
+   * @returns usb mount root drive path
+   * @example '/dev/sda1'
    */
   private getUsbMountRootDrivePath(): string {
     let mountRootDrivePath = '';
@@ -68,6 +69,35 @@ export class UsbDriveService {
     return mountRootDrivePath;
   }
 
+  /**
+   * Gets usb drive info
+   * 
+   * @returns usb drive info 
+   * @example [
+      {
+        "disk": "sda",
+        "mountPoints": [
+          {
+            "drivePath": "sda1",
+            "mountPath": "/media/user/myusbstick123"
+          },
+          {
+            "drivePath": "sda2",
+            "mountPath": ""     <<---- This is not mounted yet (probably mounted after container executed)
+          }
+        ]
+      },
+      {
+        "disk": "sdb",
+        "mountPoints": [
+          {
+            "drivePath": "sdb1",
+            "mountPath": "/media/user/myusbstick456"
+          }
+        ]
+      }
+    ]
+   */
   private getUsbDriveInfo(): UsbDriveInfo[] {
     let usbDriveInfos: UsbDriveInfo[] = [];
 
@@ -128,6 +158,13 @@ export class UsbDriveService {
     return usbDriveInfos;
   }
 
+  /**
+   * Scans usb drives
+   * NOTE: The usb drives 
+   * 
+   * @returns usb drives
+   * @example ['/media/user/myusbstick123', '/media/user/myusbstick456']
+   */
   scanUsbDrives(): string[] {
     let usbDrivePaths: string[] = [];
 
@@ -159,6 +196,12 @@ export class UsbDriveService {
     return usbDrivePaths;
   }
 
+  /**
+   * Reads directory
+   * 
+   * @param path 
+   * @returns directories or files 
+   */
   readDir(path: string): string[] {
     let files: string[] = [];
     console.log(`path=${path}`);
