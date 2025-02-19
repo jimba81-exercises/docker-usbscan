@@ -1,6 +1,5 @@
 import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { UsbDriveService } from './usb-drive.service';
-import { ReadDirDto } from './dto/read-dir.dto';
 
 @Controller('usb-drive')
 export class UsbDriveController {
