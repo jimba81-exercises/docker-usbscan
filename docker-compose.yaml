@@ -12,6 +12,7 @@ services:
             #args:
             #    NODE_VERSION: 20.9.0
 
+        #privileged: true # This is required to access USB devices from the docker container
         user: ${CUR_UID:-1000:1000} # This is required in order to access host's filesystem from the docker container
         stdin_open: true # docker run -i
         tty: true        # docker run -t
@@ -22,6 +23,8 @@ services:
         volumes:
             - ~/.bash_history:/home/node/.bash_history
             - ./workspace:/home/node/workspace
+            - /dev:/dev
+            - /media:/media
 
     prod:
         image: docker-usbscan-prod:${IMG_TAG:-latest}
