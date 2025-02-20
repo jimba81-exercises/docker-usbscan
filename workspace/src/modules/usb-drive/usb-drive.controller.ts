@@ -9,8 +9,11 @@ export class UsbDriveController {
 
   // Add a new route
   @Get()
-  findAllDrives(): string[] {
-    return this.usbDriveService.scanUsbDrives();
+  findAllDrives(@Query('auto-mount') autoMount: boolean = true): UsbDriveInfo[] {
+    if (autoMount) {
+      this.usbDriveService.autoMount();
+    }
+    return this.usbDriveService.getUsbDriveInfo();
   }
 
   // Get route with providing usb drive_id

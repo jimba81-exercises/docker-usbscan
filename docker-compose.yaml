@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.8"
 name: docker-usbscan
 
 services:
@@ -13,7 +13,11 @@ services:
             #    NODE_VERSION: 20.9.0
 
         privileged: true # This is required to access USB devices from the docker container
-        user: ${CUR_UID:-1000:1000} # This is required in order to access host's filesystem from the docker container
+        #user: ${CUR_UID:-1000:1000} # This is required in order to access host's filesystem from the docker container
+        user: root
+        # cap_add:
+        #     - SYS_ADMIN
+        #     - DAC_READ_SEARCH
         stdin_open: true # docker run -i
         tty: true        # docker run -t
         env_file:

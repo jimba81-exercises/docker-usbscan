@@ -13,17 +13,16 @@ export class UsbDriveService {
     }, 1000);
     this.scanUsbDrives();*/
 
-    this.scanUsbDevices();
-    this.scanUsbDrives();
-    
+    //this.scanUsbDevices();
     this.getUsbDriveInfo();
-
-    this.getUsbMountRootDrivePath();
-    
 
     console.log('UsbDriveService created');
   }
 
+  /**
+   * Scans usb devices
+   * @returns usb devices 
+   */
   scanUsbDevices(): string {
     let output = '';
     console.log('Scanning usb devices');
@@ -36,93 +35,17 @@ export class UsbDriveService {
   }
 
   /**
-   * Gets usb mount root drive path
-   * @returns usb mount root drive path
-   * @example '/dev/sda1'
+   * Autos mount usb drives
    */
-  private getUsbMountRootDrivePath(): string {
-    let mountRootDrivePath = '';
-
-    try {
-      const rootPath = process.env.USB_MOUNT_ROOT_PATH || '/media';
-      const command = `df -h ${rootPath} | tail -n 1 | awk '{print $1}'`;
-      const outputLines = this.bashService.executeCommandSync(command).split('\n');
-      
-      if (outputLines.length < 1) {
-        throw new Error(`Paths not found: command=${command}, output=${outputLines}`);
-      }
-      
-      mountRootDrivePath = outputLines[0];
-
-      if (!mountRootDrivePath.startsWith('/dev/')) {
-        throw new Error(`Bad path found: command=${command}, output=${outputLines}`);
-      }
-
-      mountRootDrivePath = mountRootDrivePath.replace('/dev/', '');
-
-    } catch (e) {
-      console.error(`getUsbMountRootDrivePath(): Error:${e}`);
-    }
-
-    console.log(`getUsbMountRootDrivePath(): mountRootDrivePath=${mountRootDrivePath}`);
-
-    return mountRootDrivePath;
+  autoMount(): void {
+    const unmountedDrivePaths = this.getUnmountedDrivePaths();
   }
 
   /**
    * Gets usb drive info
-   * 
    * @returns usb drive info 
-   * @example [
-      {
-        "disk": "sda",
-        "mountPoints": [
-          {
-            "drivePath": "sda1",
-            "mountPath": "/media/user/myusbstick123"
-          },
-          {
-            "drivePath": "sda2",
-            "mountPath": ""     <<---- This is not mounted yet (probably mounted after container executed)
-          }
-        ]
-      },
-      {
-        "disk": "sdb",
-        "mountPoints": [
-          {
-            "drivePath": "sdb1",
-            "mountPath": "/media/user/myusbstick456"
-          }
-        ]
-      }
-    ]
    */
-
-  private parseLsblkOutput(line: string): UsbDriveInfo | null {
-    const regex = /NAME="([^"]+)" TYPE="([^"]+)" MOUNTPOINT="([^"]*)"/;
-    const match = line.match(regex);
-    
-
-    let ret: UsbDriveInfo = { disk: '', mountPoints: [] };
-      null;
-
-    if (match) {
-      const type = match[2];
-      if (type == 'disk') {
-        ret.disk = match[1];
-      } else if (type == 'part') {
-        ret.mountPoints.push({ drivePath: match[1], mountPath: match[3] });
-      } else {
-        console.warn(`parseLsblkOutput(): Unknown type=${type}`);
-        return null;
-      }
-      return ret;
-    }
-    return null;
-  }
-
-  private getUsbDriveInfo(): UsbDriveInfo[] {
+  getUsbDriveInfo(): UsbDriveInfo[] {
     let usbDriveInfos: UsbDriveInfo[] = [];
 
     try {
@@ -137,7 +60,7 @@ export class UsbDriveService {
 
         const curDriveInfo = this.parseLsblkOutput(line);
         if (curDriveInfo == null) {
-          console.warn(`getUsbDriveInfo(): curDriveInfo is null: line=${line}`);
+          //console.warn(`getUsbDriveInfo(): curDriveInfo is null: line=${i}, total=${outputLines.length}`);
           break;
         }
 
@@ -186,44 +109,6 @@ export class UsbDriveService {
   }
 
   /**
-   * Scans usb drives
-   * NOTE: The usb drives 
-   * 
-   * @returns usb drives
-   * @example ['/media/user/myusbstick123', '/media/user/myusbstick456']
-   */
-  scanUsbDrives(): string[] {
-    let usbDrivePaths: string[] = [];
-
-    try {
-      const rootPath = process.env.USB_MOUNT_ROOT_PATH || '/media';
-      // Get media folders 
-      const mediaFiles = fs.readdirSync(rootPath);
-      // Filter mediaFolders with folder type
-      const mediaFolders = mediaFiles.filter(folder => fs.lstatSync(`${rootPath}/${folder}`).isDirectory());
-
-      console.log(`mediaFolders=${mediaFolders}`);
-
-      // For each mediaFolders, readdir with the path
-      mediaFolders.forEach(mediaFolder => {
-        const files = fs.readdirSync(`${rootPath}/${mediaFolder}`);
-
-        const folders = files.filter(folder => fs.lstatSync(`${rootPath}/${mediaFolder}`).isDirectory());
-        console.log(`Reading ${rootPath}/${mediaFolder}: folders=${folders}`);
-        folders.forEach(folder => {
-          const path = `${rootPath}/${mediaFolder}/${folder}`;
-          usbDrivePaths.push(path);
-        });
-      });
-    } catch (e) {
-      console.error(`scanUsbDrives(): Error:${e}`);
-    }
-
-    console.log(`scanUsbDrives(): files=${usbDrivePaths}`);
-    return usbDrivePaths;
-  }
-
-  /**
    * Reads directory
    * 
    * @param path 
@@ -246,4 +131,103 @@ export class UsbDriveService {
     return files;
   }
 
+  /**
+   * Gets usb mount root drive path
+   * @returns usb mount root drive path
+   * @example '/dev/sda1'
+   */
+  private getUsbMountRootDrivePath(): string {
+    let mountRootDrivePath = '';
+
+    try {
+      const rootPath = process.env.USB_MOUNT_ROOT_PATH || '/media';
+      const command = `df -h ${rootPath} | tail -n 1 | awk '{print $1}'`;
+      const outputLines = this.bashService.executeCommandSync(command).split('\n');
+      
+      if (outputLines.length < 1) {
+        throw new Error(`Paths not found: command=${command}, output=${outputLines}`);
+      }
+      
+      mountRootDrivePath = outputLines[0];
+
+      if (!mountRootDrivePath.startsWith('/dev/')) {
+        throw new Error(`Bad path found: command=${command}, output=${outputLines}`);
+      }
+
+    } catch (e) {
+      console.error(`getUsbMountRootDrivePath(): Error:${e}`);
+    }
+
+    console.log(`getUsbMountRootDrivePath(): mountRootDrivePath=${mountRootDrivePath}`);
+
+    return mountRootDrivePath;
+  }
+
+  /**
+   * Gets usb drive info
+   * 
+   * @returns usb drive info 
+   * @example [
+      {
+        "disk": "/dev/sda",
+        "mountPoints": [
+          {
+            "drivePath": "/dev/sda1",
+            "mountPath": "/media/user/myusbstick123"
+          },
+          {
+            "drivePath": "/dev/sda2",
+            "mountPath": ""     <<---- This is not mounted yet (probably mounted after container executed)
+          }
+        ]
+      },
+      {
+        "disk": "/dev/sdb",
+        "mountPoints": [
+          {
+            "drivePath": "/dev/sdb1",
+            "mountPath": "/media/user/myusbstick456"
+          }
+        ]
+      }
+    ]
+   */
+
+  private parseLsblkOutput(line: string): UsbDriveInfo | null {
+    const regex = /NAME="([^"]+)" TYPE="([^"]+)" MOUNTPOINT="([^"]*)"/;
+    const match = line.match(regex);
+    
+
+    let ret: UsbDriveInfo = { disk: '', mountPoints: [] };
+      null;
+
+    if (match) {
+      const type = match[2];
+      if (type == 'disk') {
+        ret.disk = `/dev/${match[1]}`;
+      } else if (type == 'part') {
+        ret.mountPoints.push({ drivePath: `/dev/${match[1]}`, mountPath: match[3] });
+      } else {
+        console.warn(`parseLsblkOutput(): Unknown type=${type}`);
+        return null;
+      }
+      return ret;
+    }
+    return null;
+  }
+
+  private getUnmountedDrivePaths(): string[] {
+    const usbDriveInfo = this.getUsbDriveInfo();
+    const unmountedDrivePaths: string[] = [];
+
+    usbDriveInfo.forEach(driveInfo => {
+      driveInfo.mountPoints.forEach(mountPoint => {
+        if (mountPoint.mountPath == '') {
+          unmountedDrivePaths.push(mountPoint.drivePath);
+        }
+      });
+    });
+
+    return unmountedDrivePaths;
+  }
 }
