@@ -1,27 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import * as usb from 'usb';
 import * as fs from 'fs';
 import { BashService } from 'src/modules/bash/bash.service';
-//const fs = require('fs');
+
 @Injectable()
 export class UsbDriveService {
   constructor(private readonly bashService: BashService) {
     console.log('UsbDriveService created');
-  }
-
-  /**
-   * Scans usb devices
-   * @returns usb devices 
-   */
-  scanUsbDevices(): string {
-    let output = '';
-    console.log('Scanning usb devices');
-    usb.getDeviceList().forEach(device => {
-      console.log(`device: ${JSON.stringify(device)}`);
-      output += `Device: VID=${device.deviceDescriptor.idVendor.toString(16)}, PID=${device.deviceDescriptor.idProduct.toString(16)}\n`;
-    });
-    console.log(output);
-    return output;
   }
 
   /**

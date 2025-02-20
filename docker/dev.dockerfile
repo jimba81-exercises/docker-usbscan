@@ -13,8 +13,7 @@ LABEL nestjs_cli_version="$NESTJS_CLI_VERSION"
 
 # Install apt packages
 RUN apt-get update
-RUN apt install -yq \
-    libusb-1.0-0-dev
+#RUN apt install -yq XXXX
 
 #RUN apt-get install -y sshpass
 
