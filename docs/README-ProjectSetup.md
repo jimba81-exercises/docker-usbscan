@@ -97,6 +97,34 @@ dev-docker$ chmod -R 777 * # Optional: Set permission
     RUN apt install -yq libusb-1.0-0-dev
     ```
 
+### 2.3.4. Install Swagger
+- Ref: https://docs.nestjs.com/openapi/introduction
+  ```console
+  dev-docker$ cd workspace
+  dev-docker$ npm install --save @nestjs/swagger swagger-ui-express
+  dev-docker$ npm install class-validator class-transformer
+  ```
+- Update `main.ts` (Refer reference link)
+- Install CLI plugin (this helps to maintain documentation without duplicate code). Ref: https://docs.nestjs.com/openapi/cli-plugin
+  - Update nest-cli.json
+    ```json
+    {
+        ...,
+        "compilerOptions": {
+          "plugins": [
+            {
+              "name": "@nestjs/swagger",
+              "options": {
+                "dtoFileNameSuffix": [".dto.ts", ".entyty.ts", ".def.ts"],
+                "controllerFileNameSuffix": ".controller.ts"
+              }
+            }
+          ]
+        }
+    }
+    ```
+- Check Swagger page (http://localhost:3000/api)
+
 
 <br>
 
