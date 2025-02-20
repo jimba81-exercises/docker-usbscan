@@ -6,16 +6,6 @@ import { BashService } from 'src/modules/bash/bash.service';
 @Injectable()
 export class UsbDriveService {
   constructor(private readonly bashService: BashService) {
-
-    // Run background process with interval 5 sec
-    /*setInterval(() => {
-      this.scanUsbDrives();
-    }, 1000);
-    this.scanUsbDrives();*/
-
-    //this.scanUsbDevices();
-    this.getUsbDriveInfo();
-
     console.log('UsbDriveService created');
   }
 
@@ -114,8 +104,6 @@ export class UsbDriveService {
           }
         }); 
         
-        // console.log(`rootDriveMountPoints=${JSON.stringify(rootDriveMountPoints, null, 2)}`);
-
         // Exclude root drive mount points
         return (rootDriveMountPoints == undefined);
       });
