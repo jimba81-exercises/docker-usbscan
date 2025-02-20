@@ -73,6 +73,10 @@ export class UsbDriveService {
             throw new Error(`Paths not found: command=${command}, output=${outputLines}`);
           }
           const diskLabel = this.getLabelFromBlkidOutput(outputLines[0]);
+          if (diskLabel == '') {
+            //throw new Error(`Disk label not found: command=${command}, output=${outputLines}`);
+            return;
+          }
 
           // Create mount folder
           let mountPath = `${mntRoot}/${diskLabel}`;
@@ -279,7 +283,7 @@ export class UsbDriveService {
    */
   private getLabelFromBlkidOutput(line: string): string {
     // Use regex to match LABEL="..." and capture the value inside quotes
-    const labelMatch = line.match(/LABEL="([^"]+)"/);
+    const labelMatch = line.match(/ LABEL="([^"]+)"/);
     // Return the captured group (the label value) or undefined if no match
     return labelMatch ? labelMatch[1] : '';
   }
