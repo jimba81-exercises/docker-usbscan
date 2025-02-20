@@ -98,35 +98,62 @@ export class UsbDriveService {
       }
     ]
    */
+
+  private parseLsblkOutput(line: string): UsbDriveInfo | null {
+    const regex = /NAME="([^"]+)" TYPE="([^"]+)" MOUNTPOINT="([^"]*)"/;
+    const match = line.match(regex);
+    
+
+    let ret: UsbDriveInfo = { disk: '', mountPoints: [] };
+      null;
+
+    if (match) {
+      const type = match[2];
+      if (type == 'disk') {
+        ret.disk = match[1];
+      } else if (type == 'part') {
+        ret.mountPoints.push({ drivePath: match[1], mountPath: match[3] });
+      } else {
+        console.warn(`parseLsblkOutput(): Unknown type=${type}`);
+        return null;
+      }
+      return ret;
+    }
+    return null;
+  }
+
   private getUsbDriveInfo(): UsbDriveInfo[] {
     let usbDriveInfos: UsbDriveInfo[] = [];
 
     try {
       // Get block devices for All TYPE='part'
-      const commands = "lsblk -o NAME,TYPE,MOUNTPOINT | egrep 'disk|part' | awk '{print $1, $2, $3}'";
+      const commands = "lsblk -o NAME,TYPE,MOUNTPOINT -P | egrep 'TYPE=\"disk\"|TYPE=\"part\"'";
       const outputLines = this.bashService.executeCommandSync(commands).split('\n');
 
       let driveInfoBuf: UsbDriveInfo = { disk: '', mountPoints: [] };
 
       for (let i = 0; i < outputLines.length; i++) {
         let line = outputLines[i];
-        let [drivePath, type, mountPath] = line.split(' ');
-        if (drivePath == '') {
+
+        const curDriveInfo = this.parseLsblkOutput(line);
+        if (curDriveInfo == null) {
+          console.warn(`getUsbDriveInfo(): curDriveInfo is null: line=${line}`);
           break;
         }
 
-        if (type == 'disk') {
+        if (curDriveInfo.disk != '') {
+          // Disk type
           if (driveInfoBuf.disk != '') {
-            // Add driveInfoBuf to usbDriveInfos
+            // Add last driveInfoBuf to usbDriveInfos
             usbDriveInfos.push(driveInfoBuf);
           }
 
           // Prepare for new driveInfo
-          driveInfoBuf = { disk: drivePath, mountPoints: [] };
+          driveInfoBuf = { disk: curDriveInfo.disk, mountPoints: [] };
         }
-        else if (type == 'part') {
-          drivePath = drivePath.replace('|-', '').replace('`-', '');
-          driveInfoBuf.mountPoints.push({ drivePath, mountPath });
+        else {
+          // Part type
+          driveInfoBuf.mountPoints.push(curDriveInfo.mountPoints[0]);
         }
       }
       // Add last one
