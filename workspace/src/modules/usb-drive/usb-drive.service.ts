@@ -5,7 +5,52 @@ import { BashService } from 'src/modules/bash/bash.service';
 @Injectable()
 export class UsbDriveService {
   constructor(private readonly bashService: BashService) {
+
+    this.unmountAll();
+    this.getUsbDriveInfo();
+
     console.log('UsbDriveService created');
+  }
+
+  
+  unmountAll(): void {
+    try {
+      const mntRoot = process.env.TEMP_MOUNT_DIR_PATH || '/mnt';
+
+      // Get all folders in mntRoot
+      const command = `ls -d ${mntRoot}/*`;
+      const outputLines = this.bashService.executeCommandSync(command).split('\n');
+      outputLines.forEach(folderPath => {
+        if (folderPath == '') {
+          return;
+        }
+
+        try {
+          // Unmount path
+          const command = `umount ${folderPath}`;
+          this.bashService.executeCommandSync(command);
+          console.log(`unmountAll(): Unmounted ${folderPath}`);
+        } catch (e) {
+          if (e.toString().includes('not mounted')) {
+            // Folder is not mounted. Unmount not required.
+          } else {
+            console.error(`unmountAll(): Error:${e}`);
+          }
+        }
+
+        try {
+          // Delete folder
+          const command = `rmdir ${folderPath}`;
+          this.bashService.executeCommandSync(command);
+          console.log(`unmountAll(): Deleted ${folderPath}`);
+        } catch (e) {
+          console.error(`unmountAll(): Error:${e}`);
+        }
+        
+      });
+    } catch (e) {
+      console.error(`unmountAll(): Error:${e}`);
+    }
   }
 
   /**
@@ -20,10 +65,27 @@ export class UsbDriveService {
 
         try {
           // Create mount path
-          const mountPath = `${mntRoot}/${drivePath.replace('/dev/', '')}`;
-          let command = `mkdir -p ${mountPath}`;
+
+          // Get Disk Label
+          let command = `blkid | grep ${drivePath}`;
+          const outputLines = this.bashService.executeCommandSync(command).split('\n');
+          if (outputLines.length < 1) {
+            throw new Error(`Paths not found: command=${command}, output=${outputLines}`);
+          }
+          const diskLabel = this.getLabelFromBlkidOutput(outputLines[0]);
+          if (diskLabel == '') {
+            //throw new Error(`Disk label not found: command=${command}, output=${outputLines}`);
+            return;
+          }
+
+          // Create mount folder
+          let mountPath = `${mntRoot}/${diskLabel}`;
+          // Replace space with \
+          mountPath = mountPath.replace(/ /g, '\\ ');
+          command = `mkdir -p ${mountPath}`;
           this.bashService.executeCommandSync(command);
 
+          // Mount path
           command = `mount ${drivePath} ${mountPath}`;
           this.bashService.executeCommandSync(command);
           console.log(`autoMount(): Mounted ${drivePath} to ${mountPath}`);
@@ -186,10 +248,14 @@ export class UsbDriveService {
     ]
    */
 
+  /**
+   * Returns usb drive service
+   * @param line, e.g. 'NAME="sda" TYPE="disk" MOUNTPOINT="/media/user/myusbstick123"'
+   * @returns lsblk output 
+   */
   private parseLsblkOutput(line: string): UsbDriveInfo | null {
     const regex = /NAME="([^"]+)" TYPE="([^"]+)" MOUNTPOINT="([^"]*)"/;
     const match = line.match(regex);
-    
 
     let ret: UsbDriveInfo = { disk: '', mountPoints: [] };
       null;
@@ -207,6 +273,19 @@ export class UsbDriveService {
       return ret;
     }
     return null;
+  }
+
+  /**
+   * Gets label from blkid output
+   * @param line, e.g. '/dev/sdd1: BLOCK_SIZE="2048" UUID="2023-02-23-04-13-44-00" LABEL="MY_DISK_LABEL" TYPE="iso9660" PARTLABEL="ISO9660" PARTUUID="a0891d7e-b930-4513-94d8-f629dbd637b2"';
+   * @returns label from blkid output
+   * @example 'MY_DISK_LABEL' 
+   */
+  private getLabelFromBlkidOutput(line: string): string {
+    // Use regex to match LABEL="..." and capture the value inside quotes
+    const labelMatch = line.match(/ LABEL="([^"]+)"/);
+    // Return the captured group (the label value) or undefined if no match
+    return labelMatch ? labelMatch[1] : '';
   }
 
   private getUnmountedDrivePaths(): string[] {
