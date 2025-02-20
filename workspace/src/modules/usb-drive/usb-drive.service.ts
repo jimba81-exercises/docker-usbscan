@@ -38,7 +38,28 @@ export class UsbDriveService {
    * Autos mount usb drives
    */
   autoMount(): void {
-    const unmountedDrivePaths = this.getUnmountedDrivePaths();
+    try {
+      const mntRoot = process.env.TEMP_MOUNT_DIR_PATH || '/mnt';
+
+      const unmountedDrivePaths = this.getUnmountedDrivePaths();
+      unmountedDrivePaths.forEach(drivePath => {
+
+        try {
+          // Create mount path
+          const mountPath = `${mntRoot}/${drivePath.replace('/dev/', '')}`;
+          let command = `mkdir -p ${mountPath}`;
+          this.bashService.executeCommandSync(command);
+
+          command = `mount ${drivePath} ${mountPath}`;
+          this.bashService.executeCommandSync(command);
+          console.log(`autoMount(): Mounted ${drivePath} to ${mountPath}`);
+        } catch (e) {
+          console.error(`autoMount(): Error:${e}`);
+        }
+      });
+    } catch (e) {
+      console.error(`autoMount(): Error:${e}`);
+    }
   }
 
   /**
@@ -228,6 +249,7 @@ export class UsbDriveService {
       });
     });
 
+    console.log(`getUnmountedDrivePaths(): unmountedDrivePaths=${unmountedDrivePaths}`);
     return unmountedDrivePaths;
   }
 }

@@ -27,12 +27,15 @@ services:
         volumes:
             - ~/.bash_history:/home/node/.bash_history
             - ./workspace:/home/node/workspace
+            - /mnt:/mnt
             - /dev:/dev
             - /media:/media
 
     prod:
         image: docker-usbscan-prod:${IMG_TAG:-latest}
         container_name: docker-usbscan-prod
+        privileged: true # This is required to access USB devices from the docker container
+        user: root
         env_file:
             - ${ENV_FILE_PATH:-env/.prod.env}
         build:
@@ -42,6 +45,9 @@ services:
             - "${HOST_PORT:-3001}:${PORT:-3001}"
         volumes:
             - ./logs:/home/node/logs
+            - /mnt:/mnt
+            - /dev:/dev
+            - /media:/media            
         
         
 # Commands
