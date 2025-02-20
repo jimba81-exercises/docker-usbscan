@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.8"
 name: docker-usbscan
 
 services:
@@ -12,7 +12,12 @@ services:
             #args:
             #    NODE_VERSION: 20.9.0
 
-        user: ${CUR_UID:-1000:1000} # This is required in order to access host's filesystem from the docker container
+        privileged: true # This is required to access USB devices from the docker container
+        #user: ${CUR_UID:-1000:1000} # This is required in order to access host's filesystem from the docker container
+        user: root
+        # cap_add:
+        #     - SYS_ADMIN
+        #     - DAC_READ_SEARCH
         stdin_open: true # docker run -i
         tty: true        # docker run -t
         env_file:
@@ -22,10 +27,15 @@ services:
         volumes:
             - ~/.bash_history:/home/node/.bash_history
             - ./workspace:/home/node/workspace
+            - /mnt:/mnt
+            - /dev:/dev
+            - /media:/media
 
     prod:
         image: docker-usbscan-prod:${IMG_TAG:-latest}
         container_name: docker-usbscan-prod
+        privileged: true # This is required to access USB devices from the docker container
+        user: root
         env_file:
             - ${ENV_FILE_PATH:-env/.prod.env}
         build:
@@ -35,6 +45,9 @@ services:
             - "${HOST_PORT:-3001}:${PORT:-3001}"
         volumes:
             - ./logs:/home/node/logs
+            - /mnt:/mnt
+            - /dev:/dev
+            - /media:/media            
         
         
 # Commands

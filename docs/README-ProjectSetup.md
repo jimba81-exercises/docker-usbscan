@@ -71,5 +71,32 @@ dev-docker$ chmod -R 777 * # Optional: Set permission
     }
     ```
 
+### 2.3.3. USB-DRIVE Module
+1. Add permission in `docker-compose.yaml`
+    ```yaml
+    ...
+    privileged: true # This is required to access USB devices from the docker container
+    volumes:
+      ...
+      - /dev:/dev
+    ```
+2. Add module
+    ```console
+    dev-docker$ cd ${PROJECT_PATH}/workspace
+    dev-docker$ nest g module modules/usb-drive
+    dev-docker$ nest g controller modules/usb-drive
+    dev-docker$ nest g service modules/usb-drive
+    ```
+3. Add USB Library NPM module
+    ```console
+    dev-docker$ cd ${PROJECT_PATH}/workspace
+    dev-docker$ npm install usb
+    ```
+4. Add `apt-module` in `dockerfile`
+    ```dockerfile
+    RUN apt install -yq libusb-1.0-0-dev
+    ```
+
+
 <br>
 
