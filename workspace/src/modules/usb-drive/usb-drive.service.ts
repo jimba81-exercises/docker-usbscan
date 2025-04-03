@@ -101,7 +101,31 @@ export class UsbDriveService {
   /**
    * Gets usb drive info
    * @returns usb drive info 
-   */
+   * @example [
+        {
+          "disk": "/dev/sda",
+          "mountPoints": [
+            {
+              "drivePath": "/dev/sda1",
+              "mountPath": "/media/user/myusbstick123"
+            },
+            {
+              "drivePath": "/dev/sda2",
+              "mountPath": ""     <<---- This is not mounted yet (probably mounted after container executed)
+            }
+          ]
+        },
+        {
+          "disk": "/dev/sdb",
+          "mountPoints": [
+            {
+              "drivePath": "/dev/sdb1",
+              "mountPath": "/media/user/myusbstick456"
+            }
+          ]
+        }
+      ]
+  **/
   getUsbDriveInfo(): UsbDriveInfo[] {
     let usbDriveInfos: UsbDriveInfo[] = [];
 
@@ -217,36 +241,6 @@ export class UsbDriveService {
 
     return mountRootDrivePath;
   }
-
-  /**
-   * Gets usb drive info
-   * 
-   * @returns usb drive info 
-   * @example [
-      {
-        "disk": "/dev/sda",
-        "mountPoints": [
-          {
-            "drivePath": "/dev/sda1",
-            "mountPath": "/media/user/myusbstick123"
-          },
-          {
-            "drivePath": "/dev/sda2",
-            "mountPath": ""     <<---- This is not mounted yet (probably mounted after container executed)
-          }
-        ]
-      },
-      {
-        "disk": "/dev/sdb",
-        "mountPoints": [
-          {
-            "drivePath": "/dev/sdb1",
-            "mountPath": "/media/user/myusbstick456"
-          }
-        ]
-      }
-    ]
-   */
 
   /**
    * Returns usb drive service
