@@ -34,8 +34,8 @@ $ mkdir -p workspace
 $ # Ensure permission access is resolved between host and docker environment
 $ sudo chmod -R o+w . 
 
-$ # Run dev docker container
-$ docker compose run --rm dev bash
+$ # Run dev docker container with ports mapped to the host
+$ docker compose run --service-ports --rm dev bash 
 
 dev-docker$ ## Develop within docker container..
 ```
